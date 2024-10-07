@@ -8,7 +8,8 @@ jobs:
     env:
       #AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       #AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      REGION: 'us-east-1'
+      ECR_REPOSITORY: vprofile_docker
+      AWS_REGION: 'us-east-1'
 
     steps:
      - name: Checkout Code
@@ -54,4 +55,30 @@ jobs:
            -Dsonar.junit.reportsPath=target/surefire-reports/ 
            -Dsonar.jacoco.reportsPath=target/jacoco.exec 
            -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml
-           -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/  
+           -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ 
+  
+  Build_and_Publish:
+    needs: Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+
+     - name: Checkout code
+       uses: actions/checkout@v4
+
+     - name: Build & Upload image to ECR
+       uses: appleboy/docker-ecr-action@master
+       with:
+         access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+         registry: ${{ secrets.REGISTRY }}
+         repo: ${{ env.ECR_REPOSITORY }}
+         region: ${{ env.AWS_REGION }}
+         tags: latest,${{ github.run_number }}
+         daemon_off: false
+         dockerfile: ./Dockerfile
+         context: ./
+
+
+
+          
